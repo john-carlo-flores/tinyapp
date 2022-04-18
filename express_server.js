@@ -13,6 +13,11 @@ app.set("view engine", "ejs");
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("Ok");
+});
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
