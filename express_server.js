@@ -26,6 +26,12 @@ app.get("/", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
+
+  if (longURL === undefined) {
+    res.statusCode = 404;
+    return res.end('URL requested not found.');
+  }
+
   res.redirect(longURL);
 });
 
@@ -39,6 +45,11 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (urlDatabase[req.params.shortURL] === undefined) {
+    res.statusCode = 404;
+    return res.end('URL requested not found.');
+  }
+
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
