@@ -47,3 +47,17 @@ app.get("/hello", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
+
+const generateRandomString = (stringLength) => {
+  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lower = upper.toLocaleLowerCase();
+  const digits = "0123456789";
+  const alphanumeric = upper + lower + digits;
+  let randomString = '';
+
+  for (let i = 0; i < stringLength; i++) {
+    randomString += alphanumeric[Math.floor(Math.random() * alphanumeric.length)];
+  }
+  
+  return randomString;
+};
