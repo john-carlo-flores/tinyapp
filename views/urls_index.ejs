@@ -16,13 +16,22 @@
           <tr>
             <th scope="col">Short URL</th>
             <th scope="col">Long URL</th>
+            <th scope="col">Delete</th>
           </tr>
         </thead>
         <tbody>
           <% for(let url in urls) { %>
             <tr>
-              <td><%= url %></td>
+              <td id="shortURL"><%= url %></td>
               <td><%= urls[url] %></td>
+              <td>
+                <form id="delete" method="POST" action="/urls/<%= url %>/delete">
+                  <button type="submit" class="btn btn-outline-danger">Delete</button>
+                </form>
+                <script>
+                  document.getElementById('delete').action = `/urls/${document.getElementById('shortURL').innerHTML}/delete`;
+                </script>
+              </td>
             </tr>
           <% } %>
         </tbody>
