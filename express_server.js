@@ -121,7 +121,7 @@ app.get("/urls", (req, res) => {
     return res.status(401).render('urls_no-access', { user: undefined });
   }
 
-  const templateVars = { urls: filterDataByUserID(urlDatabase), user: users[req.cookies.user_id] };
+  const templateVars = { urls: urlsForUser(req.cookies.user_id), user: users[req.cookies.user_id] };
   console.log(templateVars.user);
   res.render("urls_index", templateVars);
 });
@@ -202,12 +202,12 @@ const getUserByKeyValue = (key, value) => {
   }
 };
 
-const filterDataByUserID = (userID) => {
+const urlsForUser = (id) => {
   const newData = {};
 
   for (const shortURL in urlDatabase) {
     if (urlDatabase[shortURL].userID === userID) {
-      newData[shortURL] = urlDatabase[shortURL];
+      newData[shortURL] = urlDatabase[shortURL].longURL;
     }
   }
 
