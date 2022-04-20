@@ -84,7 +84,7 @@ app.post("/register", (req, res) => {
   
   const user = getUserByKeyValue("email", email);
 
-  if (user.email === email) {
+  if (user) {
     return res.status(400).send(`Email account ${email} already exists.`)
   }
 
@@ -144,7 +144,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (req.cookies["user_id"]) {
     return res.redirect('/urls');
   }
 
