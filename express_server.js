@@ -144,7 +144,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  if (req.cookies["user_id"]) {
+  if (req.cookies.user_id) {
     return res.redirect('/urls');
   }
 
