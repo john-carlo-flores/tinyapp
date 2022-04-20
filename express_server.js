@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
+const USER_ID_LENGTH = 8;
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -11,13 +12,13 @@ const urlDatabase = {
 };
 
 const users = {
-  "userRandomID": {
-    id: "userRandomID", 
+  "10425624": {
+    id: "10425624", 
     email: "user@example.com", 
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
+ "75839105": {
+    id: "75839105", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
  }
@@ -54,6 +55,29 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
+  res.redirect("/urls");
+});
+
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email) {
+    return res.end('Cannot register with empty email')
+  }
+
+  if (!password) {
+    return res.end('Cannot register with empty password.')
+  }
+
+  if (userExists("email", email)) {
+    return res.end(`Email account ${email} already exists.`)
+  }
+
+  const id = generateRandomString(USER_ID_LENGTH);
+  users[id] = { id, email, password };
+  res.cookie("user_id", id);
+  console.log(users);
   res.redirect("/urls");
 });
 
@@ -127,4 +151,12 @@ const generateRandomString = (stringLength) => {
   }
   
   return randomString;
+};
+
+const userExists = (field, value) => {
+  for (const userID in users) {
+    if (users[userID][field] === value) return true;
+  }
+
+  return false;
 };
