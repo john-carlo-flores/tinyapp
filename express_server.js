@@ -59,19 +59,19 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
+  const email = req.body.email.trim();
+  const password = req.body.password.trim();
 
   if (!email) {
-    return res.end('Cannot register with empty email')
+    return res.status(400).end('Cannot register with empty email')
   }
 
   if (!password) {
-    return res.end('Cannot register with empty password.')
+    return res.status(400).end('Cannot register with empty password.')
   }
 
   if (userExists("email", email)) {
-    return res.end(`Email account ${email} already exists.`)
+    return res.status(400).end(`Email account ${email} already exists.`)
   }
 
   const id = generateRandomString(USER_ID_LENGTH);
