@@ -139,6 +139,10 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  if (req.cookies.user_id) {
+    return res.redirect('/urls');
+  }
+
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies.user_id] };
   res.render("urls_register", templateVars);
 });
