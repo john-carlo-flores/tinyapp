@@ -49,12 +49,24 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = getUserByKeyValue("email", email);
+
+  if (!user) {
+    return res.status(403).send('User with email does not exist.');
+  }
+
+  if (user.password !== password) {
+    return res.status(403).send('Incorrect password.');
+  }
+
+  res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
@@ -63,15 +75,17 @@ app.post("/register", (req, res) => {
   const password = req.body.password.trim();
 
   if (!email) {
-    return res.status(400).end('Cannot register with empty email')
+    return res.status(400).send('Cannot register with empty email')
   }
 
   if (!password) {
-    return res.status(400).end('Cannot register with empty password.')
+    return res.status(400).send('Cannot register with empty password.')
   }
+  
+  const user = getUserByKeyValue("email", email);
 
-  if (userExists("email", email)) {
-    return res.status(400).end(`Email account ${email} already exists.`)
+  if (user.email === email) {
+    return res.status(400).send(`Email account ${email} already exists.`)
   }
 
   const id = generateRandomString(USER_ID_LENGTH);
@@ -83,7 +97,7 @@ app.post("/register", (req, res) => {
 //====================== GET ======================\\
 
 app.get("/", (req, res) => {
-  if (req.cookies[username]) {
+  if (req.cookies.user_id) {
     return res.redirect('/urls');
   }
 
@@ -94,31 +108,29 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
 
   if (longURL === undefined) {
-    res.statusCode = 404;
-    return res.end('URL requested not found.');
+    return res.status(404).send('URL requested not found.');
   }
 
   res.redirect(longURL);
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
+  const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
   console.log(templateVars.user);
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.cookies.user_id] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
-    res.statusCode = 404;
-    return res.end('URL requested not found.');
+    return res.status(404).send('URL requested not found.');
   }
 
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies.user_id] };
   res.render("urls_show", templateVars);
 });
 
@@ -127,16 +139,16 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies.user_id] };
   res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  if (!req.cookes["user_id"]) {
+  if (!req.cookies["user_id"]) {
     return res.redirect('/urls');
   }
 
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies.user_id] };
   res.render("urls_login", templateVars)
 })
 
@@ -162,10 +174,10 @@ const generateRandomString = (stringLength) => {
   return randomString;
 };
 
-const userExists = (field, value) => {
+const getUserByKeyValue = (key, value) => {
   for (const userID in users) {
-    if (users[userID][field] === value) return true;
+    if (users[userID][key] === value) {
+      return users[userID];
+    }
   }
-
-  return false;
 };
