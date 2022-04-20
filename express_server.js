@@ -87,17 +87,17 @@ app.post("/register", (req, res) => {
   const password = req.body.password.trim();
 
   if (!email) {
-    return res.status(400).send('Cannot register with empty email')
+    return res.status(400).send('Cannot register with empty email. Go <a href="/">back</a>.')
   }
 
   if (!password) {
-    return res.status(400).send('Cannot register with empty password.')
+    return res.status(400).send('Cannot register with empty password. Go <a href="/">back</a>.')
   }
   
   const user = getUserByKeyValue("email", email);
 
   if (user) {
-    return res.status(400).send(`Email account ${email} already exists.`)
+    return res.status(400).send(`Email account ${email} already exists. Go <a href="/">back</a>.`)
   }
 
   const id = generateRandomString(USER_ID_LENGTH);
@@ -136,8 +136,17 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(401).render('urls_no-access', { user: undefined });
+  }
+
+  if (urlDatabase[req.params.shortURL].userID !== req.cookies.user_id) {
+    return res.status(401).send(`Unable to access ${req.params.shortURL} because you do not have ownership. Go <a href="/">back</a>.`);
+  }
+
+
   if (urlDatabase[req.params.shortURL] === undefined) {
-    return res.status(404).send('URL requested not found.');
+    return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
   }
 
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies.user_id] };
@@ -148,7 +157,7 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
 
   if (longURL === undefined) {
-    return res.status(404).send('URL requested not found.');
+    return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
   }
 
   res.redirect(longURL);
@@ -206,7 +215,7 @@ const urlsForUser = (id) => {
   const newData = {};
 
   for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === userID) {
+    if (urlDatabase[shortURL].userID === id) {
       newData[shortURL] = urlDatabase[shortURL].longURL;
     }
   }
