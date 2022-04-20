@@ -131,13 +131,22 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body> Hello <b>World</b></body></html>\n");
+app.get("/login", (req, res) => {
+  if (!req.cookes["user_id"]) {
+    return res.redirect('/urls');
+  }
+
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
+  res.render("urls_login", templateVars)
 })
+
+//====================== LISTEN ======================\\
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
+
+//====================== HELPER ======================\\
 
 const generateRandomString = (stringLength) => {
   const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
