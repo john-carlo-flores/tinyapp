@@ -39,7 +39,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.post("/urls", (req, res) => {
   if (!req.cookies.user_id) {
-    return res.status(403).send('Only users logged in can create shortened URLs');
+    return res.status(403).send('Only users logged in can create shortened URLs. Go <a href="/">back</a>.');
   }
 
   const newShortURL = generateRandomString(6);
@@ -51,11 +51,27 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send('Only users logged in can delete shortened URLs. Go <a href="/">back</a>.');
+  }
+
+  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+    return res.status(401).send(`Cannot delete ${req.params.id} because you do not have ownership. Go <a href="/urls">back</a>.`);
+  }
+
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
 });
 
 app.post("/urls/:id", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send('Only users logged in can edit shortened URLs. Go <a href="/">back</a>.');
+  }
+
+  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+    return res.status(401).send(`Cannot edit ${req.params.id} because you do not have ownership. Go <a href="/urls">back</a>.`);
+  }
+
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls/${req.params.id}`);
 });
@@ -66,11 +82,11 @@ app.post("/login", (req, res) => {
   const user = getUserByKeyValue("email", email);
 
   if (!user) {
-    return res.status(403).send('User with email does not exist.');
+    return res.status(403).send('User with email does not exist. Go <a href="/login">back</a>.');
   }
 
   if (user.password !== password) {
-    return res.status(403).send('Incorrect password.');
+    return res.status(403).send('Incorrect password. Go <a href="/login">back</a>.');
   }
 
   res.cookie('user_id', user.id);
@@ -87,17 +103,17 @@ app.post("/register", (req, res) => {
   const password = req.body.password.trim();
 
   if (!email) {
-    return res.status(400).send('Cannot register with empty email. Go <a href="/">back</a>.')
+    return res.status(400).send('Cannot register with empty email. Go <a href="/register">back</a>.')
   }
 
   if (!password) {
-    return res.status(400).send('Cannot register with empty password. Go <a href="/">back</a>.')
+    return res.status(400).send('Cannot register with empty password. Go <a href="/register">back</a>.')
   }
   
   const user = getUserByKeyValue("email", email);
 
   if (user) {
-    return res.status(400).send(`Email account ${email} already exists. Go <a href="/">back</a>.`)
+    return res.status(400).send(`Email account ${email} already exists. Go <a href="/register">back</a>.`)
   }
 
   const id = generateRandomString(USER_ID_LENGTH);
