@@ -6,6 +6,7 @@ const { generateRandomString, getUserByKeyValue, urlsForUser } = require('./help
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cookieSession = require('cookie-session');
+const methodOverride = require('method-override');
 
 // ENCRYPTION
 const bcrypt = require('bcryptjs');
@@ -43,6 +44,7 @@ const users = {
 //================== INITIALIZE ==================\\
 
 app.set("view engine", "ejs");
+app.use(methodOverride('_method'));
 app.use(morgan('dev'));
 app.use(cookieSession({
   session: 'session',
@@ -63,32 +65,6 @@ app.post("/urls", (req, res) => {
     userID: req.session.user_id
   };
   res.redirect(`/urls/${newShortURL}`);
-});
-
-app.post("/urls/:shortURL/delete", (req, res) => {
-  if (!req.session.user_id) {
-    return res.status(403).send('Only users logged in can delete shortened URLs. Go <a href="/">back</a>.');
-  }
-
-  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
-    return res.status(401).send(`Cannot delete ${req.params.id} because you do not have ownership. Go <a href="/urls">back</a>.`);
-  }
-
-  delete urlDatabase[req.params.shortURL];
-  res.redirect('/urls');
-});
-
-app.post("/urls/:id", (req, res) => {
-  if (!req.session.user_id) {
-    return res.status(403).send('Only users logged in can edit shortened URLs. Go <a href="/">back</a>.');
-  }
-
-  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
-    return res.status(401).send(`Cannot edit ${req.params.id} because you do not have ownership. Go <a href="/urls">back</a>.`);
-  }
-
-  urlDatabase[req.params.id].longURL = req.body.longURL;
-  res.redirect(`/urls`);
 });
 
 app.post("/login", (req, res) => {
@@ -138,6 +114,38 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
+//=================== PUT ===================\\
+
+app.put("/urls/:shortURL", (req, res) => {
+  if (!req.session.user_id) {
+    return res.status(403).send('Only users logged in can edit shortened URLs. Go <a href="/">back</a>.');
+  }
+
+  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
+    return res.status(401).send(`Cannot edit ${req.params.id} because you do not have ownership. Go <a href="/urls">back</a>.`);
+  }
+
+  urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+  res.redirect(`/urls`);
+});
+
+//=================== DELETE ===================\\
+
+app.delete("/urls/:shortURL", (req, res) => {
+  if (!req.session.user_id) {
+    return res.status(403).send('Only users logged in can delete shortened URLs. Go <a href="/">back</a>.');
+  }
+
+  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
+    return res.status(401).send(`Cannot delete ${req.params.id} because you do not have ownership. Go <a href="/urls">back</a>.`);
+  }
+
+  delete urlDatabase[req.params.shortURL];
+  console.log(urlDatabase);
+  res.redirect('/urls');
+});
+
+
 //====================== GET ======================\\
 
 app.get("/", (req, res) => {
@@ -154,7 +162,6 @@ app.get("/urls", (req, res) => {
   }
 
   const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id] };
-  console.log(templateVars.user);
   res.render("urls_index", templateVars);
 });
 
