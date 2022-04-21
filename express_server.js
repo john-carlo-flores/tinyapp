@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080;
@@ -33,30 +33,33 @@ const users = {
 
 app.set("view engine", "ejs");
 app.use(morgan('dev'));
-app.use(cookieParser());
+app.use(cookieSession({
+  session: 'session',
+  keys: ['secretKey']
+}));
 app.use(bodyParser.urlencoded({extended: true}));
 
 //====================== POST ======================\\
 
 app.post("/urls", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(403).send('Only users logged in can create shortened URLs. Go <a href="/">back</a>.');
   }
 
   const newShortURL = generateRandomString(6);
   urlDatabase[newShortURL] = {
     longURL: req.body.longURL,
-    userID: req.cookies.user_id
+    userID: req.session.user_id
   }  
   res.redirect(`/urls/${newShortURL}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(403).send('Only users logged in can delete shortened URLs. Go <a href="/">back</a>.');
   }
 
-  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(401).send(`Cannot delete ${req.params.id} because you do not have ownership. Go <a href="/urls">back</a>.`);
   }
 
@@ -65,11 +68,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(403).send('Only users logged in can edit shortened URLs. Go <a href="/">back</a>.');
   }
 
-  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(401).send(`Cannot edit ${req.params.id} because you do not have ownership. Go <a href="/urls">back</a>.`);
   }
 
@@ -90,12 +93,12 @@ app.post("/login", (req, res) => {
     return res.status(403).send('Incorrect password. Go <a href="/login">back</a>.');
   }
 
-  res.cookie('user_id', user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 });
 
@@ -120,14 +123,14 @@ app.post("/register", (req, res) => {
   const id = generateRandomString(USER_ID_LENGTH);
   const hashedPassword = bcrypt.hashSync(password, 10);
   users[id] = { id, email, password: hashedPassword };
-  res.cookie("user_id", id);
+  req.session.user_id = id;
   res.redirect("/urls");
 });
 
 //====================== GET ======================\\
 
 app.get("/", (req, res) => {
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     return res.redirect('/urls');
   }
 
@@ -135,30 +138,30 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(401).render('urls_no-access', { user: undefined });
   }
 
-  const templateVars = { urls: urlsForUser(req.cookies.user_id), user: users[req.cookies.user_id] };
+  const templateVars = { urls: urlsForUser(req.session.user_id), user: users[req.session.user_id] };
   console.log(templateVars.user);
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.redirect('/login');
   }
 
-  const templateVars = { user: users[req.cookies.user_id] };
+  const templateVars = { user: users[req.session.user_id] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(401).render('urls_no-access', { user: undefined });
   }
 
-  if (urlDatabase[req.params.shortURL].userID !== req.cookies.user_id) {
+  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
     return res.status(401).send(`Unable to access ${req.params.shortURL} because you do not have ownership. Go <a href="/">back</a>.`);
   }
 
@@ -167,7 +170,7 @@ app.get("/urls/:shortURL", (req, res) => {
     return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
   }
 
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies.user_id] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session.user_id] };
   res.render("urls_show", templateVars);
 });
 
@@ -182,20 +185,20 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     return res.redirect('/urls');
   }
 
-  const templateVars = { user: users[req.cookies.user_id] };
+  const templateVars = { user: users[req.session.user_id] };
   res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     return res.redirect('/urls');
   }
 
-  const templateVars = { user: users[req.cookies.user_id] };
+  const templateVars = { user: users[req.session.user_id] };
   res.render("urls_login", templateVars)
 })
 
