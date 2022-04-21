@@ -1,12 +1,20 @@
-const express = require('express');
+// CONSTANTS + HELPERS
+const { PORT, USER_ID_LENGTH, KEY1 } = require('./constants');
+const { generateRandomString, getUserByKeyValue, urlsForUser } = require('./helper');
+
+// MIDDLEWARE
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cookieSession = require('cookie-session');
-const bcrypt = require('bcryptjs');
-const app = express();
-const PORT = 8080;
-const USER_ID_LENGTH = 8;
 
+// ENCRYPTION
+const bcrypt = require('bcryptjs');
+
+// EXPRESS
+const express = require('express');
+const app = express();
+
+//================== DATABASE ==================\\
 const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
@@ -20,22 +28,23 @@ const urlDatabase = {
 
 const users = {
   "KAQ4o7zG": {
-    id: "KAQ4o7zG", 
-    email: "user@example.com", 
+    id: "KAQ4o7zG",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "WkmEiZJb": {
-    id: "WkmEiZJb", 
-    email: "user2@example.com", 
+  "WkmEiZJb": {
+    id: "WkmEiZJb",
+    email: "user2@example.com",
     password: "dishwasher-funk"
- }
+  }
 };
 
+//================== INITIALIZE ==================\\
 app.set("view engine", "ejs");
 app.use(morgan('dev'));
 app.use(cookieSession({
   session: 'session',
-  keys: ['secretKey']
+  keys: [KEY1]
 }));
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -50,7 +59,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[newShortURL] = {
     longURL: req.body.longURL,
     userID: req.session.user_id
-  }  
+  };
   res.redirect(`/urls/${newShortURL}`);
 });
 
@@ -83,7 +92,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByKeyValue("email", email);
+  const user = getUserByKeyValue("email", email, users);
 
   if (!user) {
     return res.status(403).send('User with email does not exist. Go <a href="/login">back</a>.');
@@ -107,17 +116,17 @@ app.post("/register", (req, res) => {
   const password = req.body.password.trim();
 
   if (!email) {
-    return res.status(400).send('Cannot register with empty email. Go <a href="/register">back</a>.')
+    return res.status(400).send('Cannot register with empty email. Go <a href="/register">back</a>.');
   }
 
   if (!password) {
-    return res.status(400).send('Cannot register with empty password. Go <a href="/register">back</a>.')
+    return res.status(400).send('Cannot register with empty password. Go <a href="/register">back</a>.');
   }
   
-  const user = getUserByKeyValue("email", email);
+  const user = getUserByKeyValue("email", email, users);
 
   if (user) {
-    return res.status(400).send(`Email account ${email} already exists. Go <a href="/register">back</a>.`)
+    return res.status(400).send(`Email account ${email} already exists. Go <a href="/register">back</a>.`);
   }
 
   const id = generateRandomString(USER_ID_LENGTH);
@@ -142,7 +151,7 @@ app.get("/urls", (req, res) => {
     return res.status(401).render('urls_no-access', { user: undefined });
   }
 
-  const templateVars = { urls: urlsForUser(req.session.user_id), user: users[req.session.user_id] };
+  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id] };
   console.log(templateVars.user);
   res.render("urls_index", templateVars);
 });
@@ -199,47 +208,11 @@ app.get("/login", (req, res) => {
   }
 
   const templateVars = { user: users[req.session.user_id] };
-  res.render("urls_login", templateVars)
-})
+  res.render("urls_login", templateVars);
+});
 
 //====================== LISTEN ======================\\
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
-
-//====================== HELPER ======================\\
-
-const generateRandomString = (stringLength) => {
-  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const lower = upper.toLocaleLowerCase();
-  const digits = "0123456789";
-  const alphanumeric = upper + lower + digits;
-  let randomString = '';
-
-  for (let i = 0; i < stringLength; i++) {
-    randomString += alphanumeric[Math.floor(Math.random() * alphanumeric.length)];
-  }
-  
-  return randomString;
-};
-
-const getUserByKeyValue = (key, value) => {
-  for (const userID in users) {
-    if (users[userID][key] === value) {
-      return users[userID];
-    }
-  }
-};
-
-const urlsForUser = (id) => {
-  const newData = {};
-
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      newData[shortURL] = urlDatabase[shortURL].longURL;
-    }
-  }
-
-  return newData;
-};
