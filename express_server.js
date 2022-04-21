@@ -73,7 +73,7 @@ app.post("/urls/:id", (req, res) => {
   }
 
   urlDatabase[req.params.id].longURL = req.body.longURL;
-  res.redirect(`/urls/${req.params.id}`);
+  res.redirect(`/urls`);
 });
 
 app.post("/login", (req, res) => {
