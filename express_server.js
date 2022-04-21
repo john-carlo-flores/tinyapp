@@ -15,6 +15,7 @@ const express = require('express');
 const app = express();
 
 //================== DATABASE ==================\\
+
 const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
@@ -40,6 +41,7 @@ const users = {
 };
 
 //================== INITIALIZE ==================\\
+
 app.set("view engine", "ejs");
 app.use(morgan('dev'));
 app.use(cookieSession({
