@@ -4,15 +4,32 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>Short URL: <%= shortURL %></title>
+  <style>
+    #list {
+      height:100%;
+      width: auto;
+      overflow-x: hidden; 
+      overflow-y: scroll;
+    }
+  </style>
 </head>
 <body>
   <%- include('partials/_header'); %>
   <div class="card text-center">
-      <div class="card-header"></div>
-      <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+    <div class="card-header h6 d-flex justify-content-between ">
+      <div class="d-flex mb-n3">
+        <p class="card-text mr-4"><b class="text-success">Total Visits:</b> <%= visits.length %></p>
+        <p class="card-text mr-4"><b>|</b></p>
+        <p class="card-text"><b class="text-primary">Unique Visits:</b> <%= uniqueVisits %></p>
       </div>
+      <div class="justify-content-end mb-n3">
+        <p class="card-text"><b class="text-danger">Date Created:</b> <%= dateCreated %></p>
+      </div>
+    </div>
+    <div class="card-body">
+      <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+      <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+    </div>
     <div class="card-footer text-muted"></div>
     <div class="card-header text-muted">
       <h5 class="mt-n3 h2"><b>Edit</b></h5>
@@ -22,6 +39,24 @@
         <button type="submit" class="btn btn-primary">Submit</button>  
       </form>
     </div>
+  </div>
+  <div class="d-flex mt-5 justify-content-center">
+    <table id="list" class="table col-6 text-center border border-4">
+      <thead>
+        <tr>
+          <th scope="col">Visitor ID</th>
+          <th scope="col">Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for(let visit of visits) { %>
+          <tr>
+            <td><%= visit.visitor_id %></td>
+            <td><%= visit.timestamp %></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
   </div>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
