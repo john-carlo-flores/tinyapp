@@ -12,6 +12,18 @@ const generateRandomString = (stringLength) => {
   return randomString;
 };
 
+const getUniqueVisitorCount = (id, database) => {
+  const visitors = [];
+
+  for (const visitor of database[id].visits) {
+    if (!visitors.includes(visitor)) {
+      visitors.push(visitor);
+    }
+  }
+
+  return visitors.length;
+}
+
 const getUserByKeyValue = (key, value, database) => {
   for (const userID in database) {
     if (database[userID][key] === value) {
@@ -25,28 +37,17 @@ const urlsForUser = (id, database) => {
 
   for (const shortURL in database) {
     if (database[shortURL].userID === id) {
-      newData[shortURL] = database[shortURL].longURL;
+      newData[shortURL] = database[shortURL];
+      newData[shortURL].uniqueVisits = getUniqueVisitorCount(shortURL, database)
     }
   }
 
   return newData;
 };
 
-const testUsers = {
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "dishwasher-funk"
-  }
-};
-
 module.exports = {
   generateRandomString,
   getUserByKeyValue,
-  urlsForUser
+  urlsForUser,
+  getUniqueVisitorCount
 };
