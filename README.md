@@ -65,18 +65,19 @@ Keep in mind that permissions to __Edit__, __Delete__ and __View__ for each shor
 ## Roadmap
 
 :heavy_check_mark: Shortened URL list page
-  :heavy_check_mark: Create New Shortened URL
 
-  :heavy_check_mark: View, Edit and Delete Shortened URL
+:heavy_check_mark: Create New Shortened URL
 
-  :heavy_check_mark: Registration and Login
+:heavy_check_mark: View, Edit and Delete Shortened URL
 
-  :heavy_check_mark: Password Security and Cookie Encryption
+:heavy_check_mark: Registration and Login
 
-  :heavy_check_mark: Analytics for View Count and Visitor List per shortened url
+:heavy_check_mark: Password Security and Cookie Encryption
 
-  :white_check_mark: Complete tests for helper functions
+:heavy_check_mark: Analytics for View Count and Visitor List per shortened url
 
-  :white_check_mark: Persistent data transfered to a database like sqlite instead of objects
+:white_check_mark: Complete tests for helper functions
+
+:white_check_mark: Persistent data transfered to a database like sqlite instead of objects
 
 
