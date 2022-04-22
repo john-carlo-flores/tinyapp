@@ -14,10 +14,10 @@
       <% if (!user) { %>
         <div class="d-flex">
           <form class="form-inline" method="GET" action="/login">
-            <button class="btn btn-outline-dark pull-right ml-3">Login</button>
+            <button class="btn btn-outline-dark ml-3">Login</button>
           </form>
           <form class="form-inline" method="GET" action="/register">
-            <button class="btn btn-outline-dark pull-right ml-3">Register</button>
+            <button class="btn btn-outline-dark ml-3">Register</button>
           </form>
         </div>
       <% } else { %>
@@ -25,7 +25,7 @@
           <p class="m-auto font-weight-bold">
             Logged In As: <%= user.email %> User!
           </p>
-          <button class="btn btn-outline-dark pull-right ml-3">Logout</button>
+          <button class="btn btn-outline-dark ml-3">Logout</button>
         </form>
       <% } %>
     </div>
