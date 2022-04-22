@@ -1,6 +1,6 @@
 // CONSTANTS + HELPERS
 const { PORT, USER_ID_LENGTH, KEY1 } = require('./constants');
-const { generateRandomString, getUserByKeyValue, urlsForUser } = require('./helper');
+const { generateRandomString, getUserByKeyValue, urlsForUser, getUniqueVisitorCount } = require('./helper');
 
 // MIDDLEWARE
 const bodyParser = require('body-parser');
@@ -20,11 +20,18 @@ const app = express();
 const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
-    userID: "KAQ4o7zG"
+    userID: "KAQ4o7zG",
+    dateCreated: new Date(),
+    visits: [ { visitor_id: "WkmEiZJb", timestamp: new Date },
+              { visitor_id: "CyO7EtsR", timestamp: new Date },
+              { visitor_id: "CyO7EtsR", timestamp: new Date }, 
+              { visitor_id: "L528sZDs", timestamp: new Date }]
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
-    userID: "WkmEiZJb"
+    userID: "WkmEiZJb",
+    dateCreated: new Date(),
+    visits: [{ timestamp: new Date, visitor_id: "KAQ4o7zG"}]
   }
 };
 
@@ -62,7 +69,9 @@ app.post("/urls", (req, res) => {
   const newShortURL = generateRandomString(6);
   urlDatabase[newShortURL] = {
     longURL: req.body.longURL,
-    userID: req.session.user_id
+    userID: req.session.user_id,
+    dateCreated: new Date(),
+    visits: []
   };
   res.redirect(`/urls/${newShortURL}`);
 });
@@ -141,10 +150,8 @@ app.delete("/urls/:shortURL", (req, res) => {
   }
 
   delete urlDatabase[req.params.shortURL];
-  console.log(urlDatabase);
   res.redirect('/urls');
 });
-
 
 //====================== GET ======================\\
 
@@ -161,7 +168,7 @@ app.get("/urls", (req, res) => {
     return res.status(401).render('urls_no-access', { user: undefined });
   }
 
-  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id] };
+  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id],};
   res.render("urls_index", templateVars);
 });
 
@@ -188,12 +195,28 @@ app.get("/urls/:shortURL", (req, res) => {
     return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
   }
 
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session.user_id] };
+  const templateVars = { 
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL].longURL, 
+    user: users[req.session.user_id],
+    dateCreated: urlDatabase[req.params.shortURL].dateCreated.toString().substring(0, 15),
+    uniqueVisits: getUniqueVisitorCount(req.params.shortURL, urlDatabase),
+    visits: urlDatabase[req.params.shortURL].visits
+  };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
+
+  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
+    const visit = {
+      visitor_id: req.session.user_id,
+      timestamp: new Date()
+    }
+
+    urlDatabase[req.params.shortURL].visits.push(visit);
+  }
 
   if (longURL === undefined) {
     return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
