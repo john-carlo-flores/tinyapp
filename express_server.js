@@ -85,7 +85,7 @@ app.post("/login", (req, res) => {
     return res.status(403).send('User with email does not exist. Go <a href="/login">back</a>.');
   }
 
-  if (bcrypt.compareSync(password, user.password)) {
+  if (!bcrypt.compareSync(password, user.password)) {
     return res.status(403).send('Incorrect password. Go <a href="/login">back</a>.');
   }
 
@@ -186,13 +186,12 @@ app.get("/urls/:shortURL", (req, res) => {
     return res.status(401).render('urls_no-access', { user: undefined });
   }
 
-  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
-    return res.status(401).send(`Unable to access ${req.params.shortURL} because you do not have ownership. Go <a href="/">back</a>.`);
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
   }
 
-
-  if (urlDatabase[req.params.shortURL] === undefined) {
-    return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
+  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
+    return res.status(401).send(`Unable to access ${req.params.shortURL} because you do not have ownership. Go <a href="/">back</a>.`);
   }
 
   const templateVars = { 
@@ -207,6 +206,10 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
+  }
+
   const longURL = urlDatabase[req.params.shortURL].longURL;
 
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
@@ -216,10 +219,6 @@ app.get("/u/:shortURL", (req, res) => {
     }
 
     urlDatabase[req.params.shortURL].visits.push(visit);
-  }
-
-  if (longURL === undefined) {
-    return res.status(404).send('URL requested not found. Go <a href="/">back</a>.');
   }
 
   res.redirect(longURL);
